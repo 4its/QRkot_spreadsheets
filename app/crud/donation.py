@@ -1,0 +1,28 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.crud.base import CRUDBase
+from app.models import Donation, User
+from app.schemas.donation import (
+    DonationCreate, DonationGet
+)
+
+
+class CRUDDonation(
+    CRUDBase[Donation, DonationCreate, DonationGet]
+):
+
+    async def get_users_donations(
+            self,
+            session: AsyncSession,
+            user: User,
+    ):
+        users_donation = await session.execute(
+            select(Donation).where(
+                Donation.user_id == user.id
+            )
+        )
+        return users_donation.scalars().all()
+
+
+donation_crud = CRUDDonation(Donation)
