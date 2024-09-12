@@ -23,6 +23,7 @@ INFO = dict(
 
 CREDENTIALS = ServiceAccountCreds(scopes=SCOPES, **INFO)
 
+
 async def get_service():
     async with Aiogoogle(service_account_creds=CREDENTIALS) as aiogoogle:
         yield aiogoogle

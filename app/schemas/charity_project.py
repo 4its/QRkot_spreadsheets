@@ -41,11 +41,10 @@ class CharityProjectUpdate(CharityProjectBase):
         schema_extra = {
             'example': {
                 'name': 'Смена название на еще более милое и привлекательное',
-                'description': 'Супер подробное описание замечательного проекта',
+                'description': 'Супер подробное описание проекта',
                 'full_amount': 1_000_000
             }
         }
-
 
 
 class CharityProjectDB(CharityProjectBase):

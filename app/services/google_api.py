@@ -32,7 +32,7 @@ async def spreadsheets_create(
                 sheetId=0,
                 title='Список проектов',
                 gridProperties=dict(
-                    rowCount=TABLE_ROWS+count_rows,
+                    rowCount=TABLE_ROWS + count_rows,
                     columnCount=TABLE_COLUMNS,
                 )
             )
@@ -44,6 +44,7 @@ async def spreadsheets_create(
     spreadsheet_id = response['spreadsheetId']
     print(f'https://docs.google.com/spreadsheets/d/{spreadsheet_id}')
     return spreadsheet_id
+
 
 async def set_user_permissions(
         spreadsheet_id: str,
@@ -62,6 +63,7 @@ async def set_user_permissions(
             fields='id'
         )
     )
+
 
 async def spreadsheets_update_value(
         spreadsheet_id: str,

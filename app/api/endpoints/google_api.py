@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from aiogoogle import Aiogoogle
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,12 +7,12 @@ from app.core.google_client import get_service
 from app.core.user import current_superuser
 
 from app.crud import charityproject_crud
-from app.schemas.charity_project import CharityProjectDB
 from app.services import (
     spreadsheets_create, set_user_permissions, spreadsheets_update_value
 )
 
 router = APIRouter()
+
 
 @router.post(
     '/',
