@@ -29,7 +29,7 @@ async def get_all_user_donations(
         user: User = Depends(current_user),
 ):
     """Получить все пожертвования пользователя."""
-    return await donation_crud.get_users_donations(session, user)
+    return await donation_crud.get_user_donations(session, user)
 
 
 @router.get('/', response_model=list[DonationDB],)
