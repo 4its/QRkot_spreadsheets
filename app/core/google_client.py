@@ -13,6 +13,7 @@ INFO = dict(
     project_id=settings.project_id,
     private_key_id=settings.private_key_id,
     private_key=settings.private_key,
+    client_id=settings.client_id,
     client_email=settings.client_email,
     auth_uri=settings.auth_uri,
     token_uri=settings.token_uri,

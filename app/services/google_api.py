@@ -5,14 +5,14 @@ from aiogoogle import Aiogoogle
 from app.core.config import settings
 
 
-FORMAT = "%Y/%m/%d %H:%M:%S"
+FORMAT = '%Y/%m/%d %H:%M:%S'
 
 TABLE_VALUES = [
     ['Отчёт от', None],
     ['Топ проектов по скорости закрытия'],
     ['Название проекта', 'Время сбора', 'Описание проекта']
 ]
-TABLE_COLUMNS = (max(len(element) for element in TABLE_VALUES))  # TODO: Не факт что пригодится
+TABLE_COLUMNS = max(len(element) for element in TABLE_VALUES)  # TODO: Не факт что пригодится
 TABLE_ROWS = len(TABLE_VALUES)  # TODO: Не факт что пригодится
 
 
@@ -32,7 +32,7 @@ async def spreadsheets_create(
                 sheetId=0,
                 title='Список проектов',
                 gridProperties=dict(
-                    rowCount=count_rows,
+                    rowCount=TABLE_ROWS+count_rows,
                     columnCount=TABLE_COLUMNS,
                 )
             )
@@ -68,15 +68,9 @@ async def spreadsheets_update_value(
         reservations: list,
         wrapper_services: Aiogoogle
 ) -> None:
+    service = await wrapper_services.discover('sheets', 'v4')
     table_values = TABLE_VALUES.copy()
     table_values[0][1] = datetime.now().strftime(FORMAT)
-    service = await wrapper_services.discover('sheets', 'v4')
-    # table_values = [
-    #     ['Отчёт от', now_date_time],
-    #     ['Топ проектов по скорости закрытия'],
-    #     ['Название проекта', 'Кол-во бронирований']
-    # ]
-    # Здесь в таблицу добавляются строчки
     for res in reservations:
         new_row = [str(res['meetingroom_id']), str(res['count'])]
         table_values.append(new_row)
@@ -87,7 +81,7 @@ async def spreadsheets_update_value(
     await wrapper_services.as_service_account(
         service.spreadsheets.values.update(
             spreadsheetId=spreadsheet_id,
-            range='A1:E30',
+            range='A1:E30',  # TODO: Использовать RowsColums
             valueInputOption='USER_ENTERED',
             json=update_body
         )
