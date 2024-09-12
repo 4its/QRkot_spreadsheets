@@ -12,8 +12,8 @@ TABLE_VALUES = [
     ['Топ проектов по скорости закрытия'],
     ['Название проекта', 'Время сбора', 'Описание проекта']
 ]
-TABLE_COLUMNS = max(len(element) for element in TABLE_VALUES)  # TODO: Не факт что пригодится
-TABLE_ROWS = len(TABLE_VALUES)  # TODO: Не факт что пригодится
+TABLE_COLUMNS = max(len(element) for element in TABLE_VALUES)
+TABLE_ROWS = len(TABLE_VALUES)
 
 
 async def spreadsheets_create(
@@ -42,7 +42,7 @@ async def spreadsheets_create(
         service.spreadsheets.create(json=spreadsheet_body)
     )
     spreadsheet_id = response['spreadsheetId']
-    # print(f'https://docs.google.com/spreadsheets/d/{spreadsheet_id}')  # TODO: Удалить перед ревью
+    print(f'https://docs.google.com/spreadsheets/d/{spreadsheet_id}')
     return spreadsheet_id
 
 async def set_user_permissions(
@@ -66,13 +66,14 @@ async def set_user_permissions(
 async def spreadsheets_update_value(
         spreadsheet_id: str,
         reservations: list,
-        wrapper_services: Aiogoogle
+        wrapper_services: Aiogoogle,
+        count_rows=100
 ) -> None:
     service = await wrapper_services.discover('sheets', 'v4')
     table_values = TABLE_VALUES.copy()
     table_values[0][1] = datetime.now().strftime(FORMAT)
     for res in reservations:
-        new_row = [str(res['meetingroom_id']), str(res['count'])]
+        new_row = [str(res['name']), str(res['time']), str(res['description'])]
         table_values.append(new_row)
     update_body = dict(
         majorDimension='ROWS',
@@ -81,7 +82,7 @@ async def spreadsheets_update_value(
     await wrapper_services.as_service_account(
         service.spreadsheets.values.update(
             spreadsheetId=spreadsheet_id,
-            range='A1:E30',  # TODO: Использовать RowsColums
+            range=f'R1C1:R{TABLE_ROWS + count_rows}C{TABLE_COLUMNS}',
             valueInputOption='USER_ENTERED',
             json=update_body
         )
