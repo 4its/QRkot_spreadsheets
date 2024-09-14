@@ -7,7 +7,7 @@ from app.api.validators import (
 )
 from app.core.db import get_async_session
 from app.core.user import current_superuser
-from app.crud.charity_project import charityproject_crud
+from app.crud import charityproject_crud, donation_crud
 from app.schemas.charity_project import (
     CharityProjectCreate, CharityProjectDB, CharityProjectUpdate
 )
@@ -27,9 +27,16 @@ async def create_charity_project(
 ):
     await check_name_duplicate(project.name, session)
     new_charity_project = await charityproject_crud.create(
-        project, session
+        project, session, do_commit=False
     )
-    return await spread_donations(session, new_charity_project)
+    updated_sources = spread_donations(
+        target=new_charity_project,
+        sources=await donation_crud.get_opened(session),
+    )
+    session.add_all(updated_sources)
+    await session.commit()
+    await session.refresh(new_charity_project)
+    return new_charity_project
 
 
 @router.get('/', response_model=list[CharityProjectDB])
@@ -63,7 +70,14 @@ async def partially_update_charity_project(
     charity_project = await charityproject_crud.update(
         charity_project, obj_in, session
     )
-    return await spread_donations(session, charity_project)
+    updated_sources = spread_donations(
+        target=charity_project,
+        sources=await donation_crud.get_opened(session),
+    )
+    session.add_all(updated_sources)
+    await session.commit()
+    await session.refresh(charity_project)
+    return charity_project
 
 
 @router.delete(
