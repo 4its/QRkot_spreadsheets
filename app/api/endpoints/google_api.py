@@ -1,14 +1,16 @@
+from http import HTTPStatus
+
 from aiogoogle import Aiogoogle
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_async_session
 from app.core.google_client import get_service
 from app.core.user import current_superuser
 
-from app.crud import charityproject_crud
 from app.services import (
-    spreadsheets_create, set_user_permissions, spreadsheets_update_value
+    prepare_data, spreadsheets_create,
+    set_user_permissions, spreadsheets_update_value
 )
 
 router = APIRouter()
@@ -16,7 +18,7 @@ router = APIRouter()
 
 @router.post(
     '/',
-    response_model=list[dict[str, str]],
+    response_model=str,
     dependencies=[Depends(current_superuser)],
 )
 async def get_report(
@@ -24,18 +26,22 @@ async def get_report(
         wrapper_services: Aiogoogle = Depends(get_service)
 ):
     """Только для суперюзеров."""
-    closed_proj = list(
-        await charityproject_crud.get_projects_by_completion_rate(
-            session
+    table_body, rows, columns = await prepare_data(session)
+    try:
+        spreadsheet_id, spreadsheet_url = await spreadsheets_create(
+            wrapper_services, rows, columns
         )
-    )
-    rows = len(closed_proj)
-    spreadsheet_id = await spreadsheets_create(wrapper_services, rows)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=str(e),
+        )
     await set_user_permissions(spreadsheet_id, wrapper_services)
     await spreadsheets_update_value(
-        spreadsheet_id,
-        closed_proj,
         wrapper_services,
+        spreadsheet_id,
+        table_body,
         rows,
+        columns
     )
-    return closed_proj
+    return spreadsheet_url[:-5]
