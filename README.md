@@ -134,24 +134,26 @@
 
 ## Инструкция по развёртыванию проекта
 
-* клонировать проект на компьютер `git clone https://github.com/4its/cat_charity_fund.git`
+* клонировать проект на компьютер `git clone https://github.com/4its/QRkot_spreadsheets.git`
+* Переходим в папку `cd QRkot_spreadsheets`
 * создание виртуального окружения `python3 -m venv venv`
 * запуск виртуального окружения `. venv/bin/activate`
 * установить зависимости из файла requirements.txt `pip install -r requirements.txt`
-* запуск сервера `uvicorn main:app`
-* запуск сервера с автоматическим рестартом `uvicorn main:app --reload`
-* инициализируем Alembic в проекте `alembic init --template async alembic`
-* создание файла миграции `alembic revision --autogenerate -m "migration name"`
 * применение миграций `alembic upgrade head`
-* отмена миграций `alembic downgrade`
-* запуск тестов `pytest`
+* Запуск сервера:
+  * простой `uvicorn main:app`
+  * автоматическим рестартом при изменениях в файлах `uvicorn main:app --reload`
+
+### Документация в формате Swagger
+Документация доступна при запущенном(по умолчанию) сервере по адресу:
+http://127.0.0.1:8000/docs
 
 
 ## Системные требования
 
 * Python 3.9
 * FastAPI 0.78.0
-* Works on Linux, Windows, macOS
+* SQLite
 
 
 ## Разработчик проекта

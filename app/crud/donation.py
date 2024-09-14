@@ -12,17 +12,18 @@ class CRUDDonation(
     CRUDBase[Donation, DonationCreate, DonationGet]
 ):
 
-    async def get_users_donations(
+    async def get_user_donations(
             self,
             session: AsyncSession,
             user: User,
     ):
-        users_donation = await session.execute(
-            select(Donation).where(
-                Donation.user_id == user.id
+        return (
+            await session.execute(
+                select(Donation).where(
+                    Donation.user_id == user.id
+                )
             )
-        )
-        return users_donation.scalars().all()
+        ).scalars().all()
 
 
 donation_crud = CRUDDonation(Donation)

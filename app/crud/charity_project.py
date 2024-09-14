@@ -17,8 +17,8 @@ def format_time_in_days(time_in_days: float) -> str:
     minutes = int((fractional_day * 24 - hours) * 60)
     seconds = int(((fractional_day * 24 - hours) * 60 - minutes) * 60)
     if days > 1:
-        return f"{days} days {hours}:{minutes}:{seconds}"
-    return f"{days} day, {hours}:{minutes}:{seconds}"
+        return f'{days} days {hours}:{minutes}:{seconds}'
+    return f'{days} day, {hours}:{minutes}:{seconds}'
 
 
 class CRUDCharityProject(
@@ -26,14 +26,16 @@ class CRUDCharityProject(
 ):
 
     async def get_project_id_by_name(
-            self, charityproject_name: str, session: AsyncSession,
+            self, charityproject_name: str,
+            session: AsyncSession,
     ) -> Optional[int]:
-        charityproject = await session.execute(
-            select(CharityProject.id).where(
-                CharityProject.name == charityproject_name
+        return (
+            await session.execute(
+                select(CharityProject.id).where(
+                    CharityProject.name == charityproject_name
+                )
             )
-        )
-        return charityproject.scalars().first()
+        ).scalars().first()
 
     async def get_projects_by_completion_rate(
             self, session: AsyncSession

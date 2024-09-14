@@ -44,18 +44,21 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             self,
             obj_in,
             session: AsyncSession,
-            # Добавьте опциональный параметр user.
-            user: Optional[User] = None
+            user: Optional[User] = None,
+            do_commit: Optional[bool] = True,
     ) -> ModelType:
         obj_in_data = obj_in.dict()
-        # Если пользователь был передан...
         if user is not None:
-            # ...то дополнить словарь для создания модели.
             obj_in_data['user_id'] = user.id
+        if do_commit:
+            db_obj = self.model(**obj_in_data)
+            session.add(db_obj)
+            await session.commit()
+            await session.refresh(db_obj)
+            return db_obj
+        obj_in_data['invested_amount'] = 0
         db_obj = self.model(**obj_in_data)
         session.add(db_obj)
-        await session.commit()
-        await session.refresh(db_obj)
         return db_obj
 
     async def update(
@@ -89,22 +92,10 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             session: AsyncSession
     ):
         db_objects = await session.execute(
-            select(self.model).where(self.model.fully_invested == 0)
+            select(self.model).where(
+                self.model.fully_invested == 0
+            ).order_by(
+                self.model.create_date
+            )
         )
         return db_objects.scalars().all()
-
-    async def add_to_session(
-            self,
-            session: AsyncSession,
-            db_obj,
-    ):
-        session.add(db_obj)
-
-    async def commit_and_refresh(
-            self,
-            session: AsyncSession,
-            db_obj,
-    ):
-        await session.commit()
-        await session.refresh(db_obj)
-        return db_obj
