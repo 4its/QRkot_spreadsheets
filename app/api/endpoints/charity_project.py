@@ -29,11 +29,12 @@ async def create_charity_project(
     new_charity_project = await charityproject_crud.create(
         project, session, do_commit=False
     )
-    updated_sources = spread_donations(
-        target=new_charity_project,
-        sources=await donation_crud.get_opened(session),
+    session.add_all(
+        spread_donations(
+            target=new_charity_project,
+            sources=await donation_crud.get_opened(session),
+        )
     )
-    session.add_all(updated_sources)
     await session.commit()
     await session.refresh(new_charity_project)
     return new_charity_project
