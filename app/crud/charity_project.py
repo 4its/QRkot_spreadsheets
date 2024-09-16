@@ -34,16 +34,16 @@ class CRUDCharityProject(
             func.julianday(CharityProject.create_date)
         )
         return (
-                await session.execute(
-                    select(
-                        CharityProject.name,
-                        time_delta.label('time'),
-                        CharityProject.description,
-                    ).where(
-                        CharityProject.fully_invested == 1
-                    ).order_by(time_delta.label('time'))
-                )
-            ).all()
+            await session.execute(
+                select(
+                    CharityProject.name,
+                    time_delta.label('time'),
+                    CharityProject.description,
+                ).where(
+                    CharityProject.fully_invested == 1
+                ).order_by(time_delta.label('time'))
+            )
+        ).all()
 
 
 charityproject_crud = CRUDCharityProject(CharityProject)
