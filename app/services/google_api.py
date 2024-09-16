@@ -2,17 +2,15 @@ from copy import deepcopy
 from datetime import datetime
 
 from aiogoogle import Aiogoogle
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.crud import charityproject_crud
 
 
 FORMAT = '%Y/%m/%d %H:%M:%S'
-TOO_MANY_COLUMNS = 'Слишком много колонок: {} из {}.'
-TOO_MANY_CELLS = 'Слишком много ячеек: {} из {}.'
 GOOGLE_MAX_CELLS = 5_000_000
 GOOGLE_COLUMNS_LIMIT = 18_278
+TOO_MANY_CELLS = f'Слишком много ячеек: {{}} из {GOOGLE_MAX_CELLS}.'
+TOO_MANY_COLUMNS = f'Слишком много колонок: {{}} из {GOOGLE_COLUMNS_LIMIT}.'
 
 SPREADSHEET_BODY_TEMPLATE = dict(
     properties=dict(
@@ -37,16 +35,28 @@ TABLE_VALUES = [
 ]
 
 
-async def prepare_data(session: AsyncSession):
+def format_time_in_days(time_in_days: float) -> str:
+    days = int(time_in_days)
+    fractional_day = time_in_days - days
+    hours = int(fractional_day * 24)
+    minutes = int((fractional_day * 24 - hours) * 60)
+    seconds = int(((fractional_day * 24 - hours) * 60 - minutes) * 60)
+    if days > 1:
+        return f'{days} days {hours}:{minutes}:{seconds}'
+    return f'{days} day, {hours}:{minutes}:{seconds}'
+
+
+async def prepare_data(projects):
+    """
+    Возвращает подготовленные данные для записи в таблицу, а также
+    необходимое количество строк и колонок.
+    """
     table_values = deepcopy(TABLE_VALUES)
     table_values[0][1] = datetime.now().strftime(FORMAT)
     table_values.extend(
-        list(project.values()) for project
-        in await charityproject_crud.get_projects_by_completion_rate(session)
+        list(project.values()) for project in projects
     )
-    rows = len(table_values)
-    columns = max(len(row) for row in table_values)
-    return table_values, rows, columns
+    return table_values, len(table_values), max(map(len, table_values))
 
 
 async def spreadsheets_create(
@@ -58,17 +68,18 @@ async def spreadsheets_create(
     service = await wrapper_service.discover('sheets', 'v4')
     if columns > GOOGLE_COLUMNS_LIMIT:
         raise ValueError(
-            TOO_MANY_COLUMNS.format(columns, GOOGLE_COLUMNS_LIMIT)
+            TOO_MANY_COLUMNS.format(columns)
         )
     if rows * columns > GOOGLE_MAX_CELLS:
         raise ValueError(
-            TOO_MANY_CELLS.format(columns * rows, GOOGLE_MAX_CELLS)
+            TOO_MANY_CELLS.format(columns * rows)
         )
     now_date_time = datetime.now().strftime(FORMAT)
     body = deepcopy(spreadsheet_template)
     body['properties']['title'] = f'Отчет на {now_date_time}'
-    body['sheets'][0]['properties']['gridProperties']['rowCount'] = rows
-    body['sheets'][0]['properties']['gridProperties']['columnCount'] = columns
+    grid_properties = body['sheets'][0]['properties']['gridProperties']
+    grid_properties['rowCount'] = rows
+    grid_properties['columnCount'] = columns
     response = await wrapper_service.as_service_account(
         service.spreadsheets.create(json=body)
     )
@@ -80,12 +91,15 @@ async def set_user_permissions(
         wrapper_services: Aiogoogle
 ) -> None:
     service = await wrapper_services.discover('drive', 'v3')
-    permissions_body = dict(
-        type='user', role='writer', emailAddress=settings.email,
-    )
     await wrapper_services.as_service_account(
         service.permissions.create(
-            fileId=spreadsheet_id, json=permissions_body, fields='id'
+            fileId=spreadsheet_id,
+            json=dict(
+                type='user',
+                role='writer',
+                emailAddress=settings.email,
+            ),
+            fields='id'
         )
     )
 
@@ -98,15 +112,14 @@ async def spreadsheets_update_value(
         columns: int,
 ) -> None:
     service = await wrapper_services.discover('sheets', 'v4')
-    update_body = dict(
-        majorDimension='ROWS',
-        values=table_values
-    )
     await wrapper_services.as_service_account(
         service.spreadsheets.values.update(
             spreadsheetId=spreadsheet_id,
             range=f'R1C1:R{rows}C{columns}',
             valueInputOption='USER_ENTERED',
-            json=update_body
+            json=dict(
+                majorDimension='ROWS',
+                values=table_values
+            )
         )
     )
