@@ -9,7 +9,7 @@ class Donation(FoundBase):
 
     def __repr__(self):
         return (
-            f'<Donation(user_id={self.user_id}, '
-            f'comment={self.comment}, '
+            f'<Donation({self.user_id=}, '
+            f'{self.comment=}, '
             f'{super().__repr__()})>'
         )

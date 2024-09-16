@@ -9,7 +9,7 @@ class CharityProject(FoundBase):
 
     def __repr__(self):
         return(
-            f'<CharityProject(name={self.name}, '
-            f'description={self.description}, '
+            f'<CharityProject({self.name=}, '
+            f'{self.description=}, '
             f'{super().__repr__()})>'
         )
