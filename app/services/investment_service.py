@@ -7,6 +7,7 @@ def spread_donations(
         target: FoundBase,
         sources: list[FoundBase]
 ) -> list[FoundBase]:
+    updated = []
     for source in sources:
         availible_investment = min(
             target.full_amount - target.invested_amount,
@@ -17,6 +18,7 @@ def spread_donations(
             if item.invested_amount == item.full_amount:
                 item.fully_invested = True
                 item.close_date = datetime.now()
+        updated.append(source)
         if target.fully_invested:
             break
-    return sources
+    return updated
