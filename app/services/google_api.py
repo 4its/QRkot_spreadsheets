@@ -9,7 +9,10 @@ from app.core.config import settings
 FORMAT = '%Y/%m/%d %H:%M:%S'
 GOOGLE_MAX_CELLS = 5_000_000
 GOOGLE_COLUMNS_LIMIT = 18_278
-TOO_MANY_CELLS = f'Слишком много ячеек: {{}} из {GOOGLE_MAX_CELLS}.'
+TOO_MANY_CELLS = (
+    f'Слишком много ячеек: {{}}(колонок) * {{}}(строк) '
+    f'= {{}} из {GOOGLE_MAX_CELLS}.'
+)
 TOO_MANY_COLUMNS = f'Слишком много колонок: {{}} из {GOOGLE_COLUMNS_LIMIT}.'
 
 SPREADSHEET_BODY_TEMPLATE = dict(
@@ -72,7 +75,7 @@ async def spreadsheets_create(
         )
     if rows * columns > GOOGLE_MAX_CELLS:
         raise ValueError(
-            TOO_MANY_CELLS.format(columns * rows)
+            TOO_MANY_CELLS.format(columns, rows, columns * rows)
         )
     now_date_time = datetime.now().strftime(FORMAT)
     body = deepcopy(spreadsheet_template)
