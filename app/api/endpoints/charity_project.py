@@ -69,13 +69,14 @@ async def partially_update_charity_project(
             charity_project.id, obj_in.full_amount, session
         )
     charity_project = await charityproject_crud.update(
-        charity_project, obj_in, session
+        charity_project, obj_in, session, False
     )
-    updated_sources = spread_donations(
-        target=charity_project,
-        sources=await donation_crud.get_opened(session),
+    session.add_all(
+        spread_donations(
+            target=charity_project,
+            sources=await donation_crud.get_opened(session),
+        )
     )
-    session.add_all(updated_sources)
     await session.commit()
     await session.refresh(charity_project)
     return charity_project
