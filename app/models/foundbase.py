@@ -20,8 +20,8 @@ class FoundBase(Base):
             name='full_amount is positive'
         ),
         CheckConstraint(
-            'invested_amount <= full_amount',
-            name='check_invested_not_exceed_full'
+            '0 <= invested_amount <= full_amount',
+            name='check_invested_between_0_and_full_amount'
         )
     )
 
